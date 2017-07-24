@@ -4,14 +4,17 @@ Created on Sun Jul 16 20:51:15 2017
 
 @author: Ymubarak
 """
+# fix stress object in list overlap 
+# write exception 
 import numpy as np 
 import re 
 
 class feapoutput() : 
-    def __init__(self, path,nodenumber=[]) : 
+    def __init__(self, path,nodenumber=[],elemnumber= []) : 
         self.path = path 
         self.filetext = open(path).readlines
         self.nodenumber = nodenumber
+        self.elemnumber = elemnumber
         self.finaldisplacement = []
         self.displacementlist = list() 
         self.finalstress = []
@@ -19,6 +22,7 @@ class feapoutput() :
     def listidentifiers(self) : 
         iden= list() 
         iden.append("Number of Nodal Points") 
+        iden.append("Number of Elements")
         iden.append( "N o d a l   D i s p l a c e m e n t s ")
         iden.append("Element Stresses")
         return iden 
@@ -34,9 +38,13 @@ class feapoutput() :
                 nodes = [int(x) for x in node]
                 self.nodenumber = nodes[0]
                 
+            if idents[1] in line: 
+                elem=re.findall(r'\d+', line)
+                elems = [int(x) for x in elem]
+                self.elemnumber = elems[0]
             ## starting the displcament parser if reads identifier 
-            if idents[1] in line :
-                print(line_in) 
+            if idents[2] in line :
+               # print(line_in) 
                 disp_current = displacement(self.nodenumber)
                 readNextdisp = True 
                 
@@ -48,23 +56,26 @@ class feapoutput() :
             
             ## read for the stresses
     
-            if idents[2] in line and str_current.blockpointer == 0 :
-                print(line_in) 
-                str_current = stresses(self.nodenumber)
+            if idents[3] in line and str_current.blockpointer == 0 :
+                print('start stress' + str(line_in) ) 
+                str_current = stresses(self.elemnumber)
                 readNextstr = True 
                 
             elif readNextstr is True:
                readNextstr = str_current.read_line(line) 
-               print(line_in)
+              # print(str_current.nodepointer)
               # print(str_current.blockpointer)
-               if str_current.nodepointer ==self.nodenumber :
+            if "Computing solution " in line :
+                    readNextstr= False
                     self.finalstress = str_current
                     self.stresslist.append(str_current)
             line_in = line_in + 1 
             
-
+        self.finalstress = str_current
+        self.stresslist.append(str_current)
 class displacement() : 
     def __init__(self, nodenumber): 
+        self.time= []
         self.identifier =  "N o d a l   D i s p l a c e m e n t s "
         self.pointer= 0
         self.nodenumber = nodenumber 
@@ -75,7 +86,6 @@ class displacement() :
             pass 
         elif self.pointer==3: 
             self.matrix= np.array(toNumpyRow(line))
-            print('first line' + str(line))
         elif self.pointer < self.nodenumber + 3 :
             row = toNumpyRow(line)
     
@@ -87,21 +97,22 @@ class displacement() :
         return readNext
 
 class stresses():
-    def __init__(self, nodenumber):
+    def __init__(self, elemnumber):
         self.identifier = "Element Stresses"
         self.linepointer = 0 
         self.blockpointer = 0 
+        self.nodepointer = 1 
         try :
-            self.nodenumber = nodenumber
+            self.elemnumber = elemnumber
         except TypeError: 
             print('enter node number')
-        self.stress_matrix = np.zeros([nodenumber,9])
-        self.strain_matrix = np.zeros([nodenumber,9])
+        self.stress_matrix = np.zeros([elemnumber,9])
+        self.strain_matrix = np.zeros([elemnumber,9])
         self.stress_header = np.array(['11-stress','22-stress','33-stress','12-stress','23-stress',
                                        '31-stress','1-stress', '2-stress','3-stress'])
         self.strain_header = np.array(['11-strain','22-strain','33-strain','12-strain','23-strain',
                                        '31-strain','1-strain', '2-strain','3-strain'])
-        self.nodepointer = 0 
+
     def read_line(self,line):
         readNext = True 
         if self.blockpointer >=1 :
@@ -110,34 +121,42 @@ class stresses():
                 self.nodepointer= row[0]
             elif len(row)== 6: 
                 if self.linepointer == 0 : 
-                    self.stress_matrix[self.nodepointer-1 , 0:5]= row 
+                    self.stress_matrix[int(self.nodepointer)-1 , 0:6]= row 
+                    self.linepointer = 1
                 elif self.linepointer == 1: 
-                    self.strain_matrix[self.nodepointer-1 , 0:5]= row 
+                    self.strain_matrix[int(self.nodepointer)-1 , 0:6]= row 
+                    self.linepointer = 2
                 elif self.linepointer == 2 : 
-                    self.stress_matrix[self.nodepointer-1 , 5:8]= row[0:3]
-                    self.strain_matrix[self.nodepointer-1 , 5:8]= row[3:6] 
-                    self.linepointer = self.linepointer + 1 
+                    self.stress_matrix[int(self.nodepointer)-1 , 6:9]= row[0:3]
+                    self.strain_matrix[int(self.nodepointer)-1 , 6:9]= row[3:6] 
+                    self.linepointer = 0 
+
+            
             elif line == '\n':
-                self.linepointer= 0 
                 self.blockpointer= self.blockpointer + 1 
-                if self.nodepointer < self.nodenumber: 
+                if self.nodepointer < self.elemnumber: 
                     readNext = True 
                 else : 
                     readNext = False 
             elif self.identifier in line : 
                 self.blockpointer = self.blockpointer -1 
         else: 
-            if line == '\n' and self.blockpointer == 'headerblock':
-                 self.blockpointer = self.blockpointer + 1 
+            if line == '\n' and self.blockpointer == -1 :
+                 self.blockpointer = self.blockpointer + 2
+                 print('start reading')
             elif line == '\n':
-                self.blockpinter = 'headerblock'
+                self.blockpointer = -1
+                print(self.blockpointer)
+    
         return readNext 
     
         
-def toNumpyRow(line):
+def toNumpyRow(line, exception = False):
     numbstart= False 
     row = list() 
     for i in range(0,len(line)): 
+        print(line[i])
+        print(numbstart is True and not line[i].isdigit())
         if line[i].isdigit() and numbstart is False:
             numbstart= True 
             word = str(line[i])
@@ -145,5 +164,12 @@ def toNumpyRow(line):
             word= word + str(line[i])
         elif numbstart is True and not line[i].isdigit():
             numbstart = False 
-            row.append(float(word))
-    return np.array(row) 
+            word =str(word)
+            print(type(word))
+            word.replace(':','')
+            print(word)
+            try :
+                row.append(float(word))
+            except ValueError :
+                pass 
+    return np.array(row)
