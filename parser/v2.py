@@ -44,8 +44,8 @@ class feapoutput() :
                 self.elemnumber = elems[0]
             ## starting the displcament parser if reads identifier 
             if idents[2] in line :
-               # print(line_in) 
                 disp_current = displacement(self.nodenumber)
+                disp_current.time = toNumpyRow(line)
                 readNextdisp = True 
                 
             elif readNextdisp is True:
@@ -57,18 +57,20 @@ class feapoutput() :
             ## read for the stresses
     
             if idents[3] in line and str_current.blockpointer == 0 :
-                print('start stress' + str(line_in) ) 
+                #print('start stress' + str(line_in) ) 
                 str_current = stresses(self.elemnumber)
                 readNextstr = True 
                 
             elif readNextstr is True:
                readNextstr = str_current.read_line(line) 
-              # print(str_current.nodepointer)
-              # print(str_current.blockpointer)
+
             if "Computing solution " in line :
                     readNextstr= False
+                    non_formatted_nums = toNumpyRow(line,exception= True)
+                    str_current.time = float(non_formatted_nums[0].replace(':',''))
                     self.finalstress = str_current
                     self.stresslist.append(str_current)
+                    
             line_in = line_in + 1 
             
         self.finalstress = str_current
@@ -99,6 +101,7 @@ class displacement() :
 class stresses():
     def __init__(self, elemnumber):
         self.identifier = "Element Stresses"
+        self.time = []
         self.linepointer = 0 
         self.blockpointer = 0 
         self.nodepointer = 1 
@@ -155,8 +158,8 @@ def toNumpyRow(line, exception = False):
     numbstart= False 
     row = list() 
     for i in range(0,len(line)): 
-        print(line[i])
-        print(numbstart is True and not line[i].isdigit())
+       # print(line[i])
+        #print(numbstart is True and not line[i].isdigit())
         if line[i].isdigit() and numbstart is False:
             numbstart= True 
             word = str(line[i])
@@ -164,12 +167,10 @@ def toNumpyRow(line, exception = False):
             word= word + str(line[i])
         elif numbstart is True and not line[i].isdigit():
             numbstart = False 
-            word =str(word)
-            print(type(word))
-            word.replace(':','')
-            print(word)
             try :
                 row.append(float(word))
             except ValueError :
                 pass 
+            if exception is True : 
+                row.append(word)
     return np.array(row)
