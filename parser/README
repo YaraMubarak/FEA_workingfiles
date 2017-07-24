@@ -1,0 +1,64 @@
+READ ME 
+
+main work flow : 
+	path = def/you/path 
+	output = feapoutput(path)
+	output.parse() 
+
+
+Main Class : 
+feapoutput : 
+	input : path of file of feap output 
+	feilds: 
+		output.path = path 
+        output.filetext = open(path).readlines
+        output.nodenumber = nodenumber (can be inputted but defaults to [])
+        output.elemnumber = elemnumber (can be inputted but defaults to [])
+        output.finaldisplacement = []
+        output.finalstrain = []
+        output.finalstress = []
+        output.displacementlist = list() 
+        output.stresslist = list() 
+        output.solutiontimes = []
+
+    object modules : 
+    	parse : 
+    		parses the file and fills all the feilds if the information exists in the text 
+    	cleanup: 
+    		built in parse and cleans up a few things that can be seen in the code
+    		can be modified if a person would like to view things in a different format 
+
+Sub Classes : 
+displacement : 		
+	it is found in the feapoutput output.displacementlist and will have more details than just the final displacement matrix for each of the time increments.
+	
+	input : nodenumber 
+	feilds : 
+		disp.time= []
+        disp.identifier =  "N o d a l   D i s p l a c e m e n t s "
+        disp.pointer= 0
+        disp.nodenumber = nodenumber 
+        disp.matrix = []
+
+stresses: 
+	it is found in the feapoutput object in output.stresslist and contains stress AND STRAIN matrices. 
+
+	input : elemnumber 
+	feilds : 
+		self.identifier = "Element Stresses"
+        self.time = []
+        self.linepointer = 0 
+        self.blockpointer = 0 
+        self.nodepointer = 1 
+        self.elemnumber = elemnumber
+        self.stress_matrix = np.zeros([elemnumber,9])
+        self.strain_matrix = np.zeros([elemnumber,9])
+        self.stress_header = np.array(['11-stress','22-stress','33-stress','12-stress','23-stress',
+                                       '31-stress','1-stress', '2-stress','3-stress'])
+        self.strain_header = np.array(['11-strain','22-strain','33-strain','12-strain','23-strain',
+                                       '31-strain','1-strain', '2-strain','3-strain'])
+
+
+
+
+
