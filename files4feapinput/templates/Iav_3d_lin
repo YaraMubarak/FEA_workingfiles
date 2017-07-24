@@ -1,0 +1,54 @@
+feap * * AV 3D Linear
+	0 0 0 3 3 4
+
+param
+E  = 3000
+nu = 0.4
+pt = 100 ! top
+pb = 200 ! bottom
+k  = 10 ! spring 
+
+mate,1
+solid,,1
+elastic isotropic E nu
+
+mate,2
+point
+spring k
+orient 1,1,0
+
+nopr
+include av.mesh
+include av.spring
+include av.boun
+include av.load
+nopr
+
+check
+
+end
+
+batch
+prop,,1
+end
+2 2
+0,0 1,pt
+
+batch
+prop,,2
+end
+2 2
+0,0 1,pb
+
+batch
+dt,,1
+loop,infinite
+time,,1
+loop,,35
+tang,,1
+next
+disp,all
+next
+end
+
+stop
