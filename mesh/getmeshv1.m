@@ -3,9 +3,8 @@ clear all ; clc
 %% Getting Semi-optimized mesh from stl valve geometry 
 model= createpde(1);
 gd = importGeometry(model,'valve_mesh_long3_cut.stl');
-%pdegplot(model);
 msh=generateMesh(model, 'GeometricOrder', 'linear');
-
+%pdegplot(model);
 
 %% getting loads in feap input form arrays: 
 Nodes=msh.Nodes;
@@ -73,12 +72,12 @@ A = e.getElementFaces(3);
 A= A';
 norms=getnormal(A, Nodes(:,3:5));
 
-% %plot one face and make sure 
+%plot one face and make sure 
 % trinodes= A(1,:) ;
 % trixyz= Nodes(trinodes, 3:5) ;
 % norm_1= norms(1,:)' ;
 % line_1 = trixyz(1,:) - trixyz(2,:) ; 
-
-facenodes= vertcat(unique(A(:,1)),unique(A(:,2)), unique(A(:,3)));
-Axyz= Nodes(facenodes, 3:5) ;
-length(find(round(norms(:,2),2)))
+% 
+% facenodes= vertcat(unique(A(:,1)),unique(A(:,2)), unique(A(:,3)));
+% Axyz= Nodes(facenodes, 3:5) ;
+% length(find(round(norms(:,2),2)))

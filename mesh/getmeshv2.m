@@ -10,9 +10,15 @@ Eles= msh.Elements';
 
 %% Rotate to Align with z axis instead of y 
 th= -pi/2; 
-Rot= [1,0,0; 0 ,cos(th), -sin(th); 0, sin(th), cos(th)];
-Nodes= Nodes*Rot';
+Rot= [1,0,0; 0 ,cos(th), sin(th); 0, -sin(th), cos(th)];
 
+
+%rotate to make face 3 at X axis (angle at 30) with mirroring
+alpha = -30- 180; 
+Rot2= [cosd(alpha), sind(alpha), 0;  -sind(alpha), cosd(alpha), 0; 0,0,1]; 
+
+Nodes= Nodes*Rot';
+Nodes = Nodes*Rot2';
 %% finding the normals to nodes 
 [p,e,t] = model.Mesh.meshToPet();
 for i= 1:7 
@@ -27,8 +33,9 @@ for face= 3:4
     if not (isempty(find(round(norm_mat(:,3),2))))
         disp('not orthogonal to z ; use a different Rotation matrix')
     end 
-    angles{face-2} = acos(norm_mat(:,1));  %Notice they are the same angles ... due to SOLIDWORKS cutting 
+    angles{face-2} = radtodeg(acos(norm_mat(:,1))); %Notice they are the same angles ... due to SOLIDWORKS cutting 
 end 
+
 
 
 %% Get nodes of top and bottom flat from justloads.txt 
@@ -232,6 +239,33 @@ fclose(fileID) ;
 spring_in= mat(length(mat),1);
 
 %% make .pres file 
+
+% unify normal
+
+ns= getnormal(lowersurf, Nodes) ;
+for i = 1:length(lowersurf) 
+    if ns(i,3) > 0 
+        new = lowersurf(i,:) ;
+        new(2) = lowersurf(i,3) ;
+        new(3) = lowersurf(i,2) ; 
+        lowersurf(i,:) = new ;
+    end 
+end 
+ns= getnormal(lowersurf,Nodes);
+check1 = length(ns(ns(:,3)>0))
+
+ns= getnormal(uppersurf, Nodes) ;
+for i = 1:length(uppersurf) 
+    if ns(i,3) < 0 
+        new = uppersurf(i,:) ;
+        new(2) = uppersurf(i,3) ;
+        new(3) = uppersurf(i,2) ; 
+        uppersurf(i,:) = new ;
+    end 
+end 
+
+ns= getnormal(uppersurf,Nodes);
+check2 = length(ns(ns(:,3)<0))
 
 fileID = fopen('inp_v2.pres', 'wt');
 fprintf(fileID,'elem');
