@@ -1,0 +1,109 @@
+feap * * artery
+0 0 0 2 2 3
+
+global
+plane strain
+
+param
+p = 70.00*90
+
+! arterial wall aka wall_out
+mate 1 
+solid
+finite
+ucon,plaq
+c1m,26447.5
+c2m,8.365
+uend
+
+! arterial wall aka wall_in
+mate 2 
+solid
+finite
+ucon,plaq
+c1m,26447.5
+c2m,8.365
+uend
+
+! lumen aka fibrous plaque
+mate 3
+solid
+finite
+ucon,plaq
+c1m,5105.3
+c2m,13.0
+uend
+
+! lipid
+mate 4
+solid
+finite
+ucon,plaq
+c1m,50.0
+c2m,5.0
+uend
+
+! calcium
+mate 5
+solid
+finite
+ucon,plaq
+c1m,18804.5
+c2m,20.0
+uend
+
+! lipid
+mate 6
+solid
+finite
+ucon,plaq
+c1m,50.0
+c2m,5.0
+uend
+
+! calcium
+mate 7
+solid
+finite
+ucon,plaq
+c1m,18804.5
+c2m,20.0
+uend
+
+mate 9
+pres
+load p 1
+
+nopr
+include N500_A1.mesh
+include N500_A1.pres
+include N500_A1.boun
+nopr
+
+check
+
+end
+
+batch
+prop,,1
+end
+2 3
+0,0 1,1 2,0
+3,0 4,1 5,0
+6,0 7,1 8,0
+
+batch
+pard
+dt,,1e-3
+auto,time,6,16,30
+auto,dt,1e-10,1e-1
+loop,infinite
+time,,1.0
+loop,,35
+tang,,1
+next
+next
+stre,all
+end
+
+stop
