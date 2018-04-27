@@ -152,7 +152,13 @@ class stresses():
         self.stress_header = np.array(['11-stress','22-stress','33-stress','12-stress','23-stress',
                                        '31-stress','1-stress', '2-stress','3-stress'])
         self.strain_header = np.array(['11-strain','22-strain','33-strain','12-strain','23-strain',
-                                       '31-strain','1-strain', '2-strain','3-strain'])
+                           '31-strain','1-strain', '2-strain','3-strain'])
+    
+    def VonMises(self, s_r):
+        return (1/float(2**0.5))*np.sqrt((s_r[6]- s_r[7])**2 + (s_r[8]- s_r[7])**2 + (s_r[8]- s_r[6])**2)
+    
+    def VonMisesList(self):
+        return [self.VonMises(self.stress_matrix[i]) for i in range(len(self.stress_matrix))]
 
     def read_line(self,line):
         readNext = True 
